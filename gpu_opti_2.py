@@ -1,5 +1,7 @@
 import taichi as ti
 
+print("test main")
+
 # Initialisation sur GPU
 ti.init(arch=ti.vulkan)
 
