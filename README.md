@@ -1,7 +1,3 @@
-Ton README actuel est une excellente base scientifique, mais il ne reflète pas encore le travail impressionnant que tu as fait pour rendre la simulation interactive et accessible sur le web.
-
-Voici une version améliorée et "pro" qui met en valeur tes deux versions (GPU/Vulkan et CPU/Web).
-
 ---
 
 # 🕳️ Gravitational Lens Simulation
@@ -95,5 +91,3 @@ Ensure you are on the `main` branch and run your executable script.
 2. **Mise en forme Markdown** : Utilisation de titres, de listes, de gras et de blocs de code pour rendre la lecture agréable.
 3. **Ton pro** : On explique la technique (Taichi, Vulkan) tout en gardant l'explication physique sur l'indice de réfraction.
 4. **Instructions claires** : N'importe qui peut maintenant cloner ton projet et le lancer.
-
-**Est-ce que cette version te convient ? Tu peux la copier-coller directement dans ton fichier `README.md` !**
