@@ -5,7 +5,7 @@ import taichi as ti
 # Initialisation sur GPU
 ti.init(arch=ti.vulkan)
 
-res_x, res_y = 1920, 1080
+res_x, res_y = 1920, 1200
 pixels = ti.Vector.field(3, dtype=ti.f32, shape=(res_x, res_y))
 # Champ supplémentaire pour stocker l'image précédente et lisser
 accum_buffer = ti.Vector.field(3, dtype=ti.f32, shape=(res_x, res_y))
