@@ -1,17 +1,16 @@
 import taichi as ti
 
-print("test main")
 
 
 # Initialisation sur GPU
 ti.init(arch=ti.vulkan)
 
-res_x, res_y = 1920, 1080
+res_x, res_y = 1920, 1200
 pixels = ti.Vector.field(3, dtype=ti.f32, shape=(res_x, res_y))
 # Champ supplémentaire pour stocker l'image précédente et lisser
 accum_buffer = ti.Vector.field(3, dtype=ti.f32, shape=(res_x, res_y))
 
-@ti.func
+@ti.func # Fonction à l'interieur du kernel
 def n_and_grad(rel_pos, rs):
     r = rel_pos.norm()
     n = 1.0 / ti.sqrt(1.0 - rs / r)
@@ -20,11 +19,11 @@ def n_and_grad(rel_pos, rs):
     return n, grad_n
 
 
-@ti.kernel
-def render(rs: ti.f32, mouse_x: ti.f32, mouse_y: ti.f32, reset_accum: ti.i32):
+@ti.kernel  # Code compilé par taichi et envoyé sur GPU (appelé par code python)
+def render(rs: ti.f32, mouse_x: ti.f32, mouse_y: ti.f32, reset_accum: ti.i32, t: ti.f32):
     # Paramètres caméra
-    radius_cam = 12.0
-    theta = mouse_x * 6.28
+    radius_cam = 8.0
+    theta = mouse_x * 6.28 + t
     phi = (mouse_y - 0.5) * 3.14 * 0.95
     
     cam_pos = ti.Vector([
@@ -82,7 +81,7 @@ def render(rs: ti.f32, mouse_x: ti.f32, mouse_y: ti.f32, reset_accum: ti.i32):
             
             if r.norm() > 25.0:
                 # Étoiles procédurales
-                if ti.sin(v.x*80) * ti.sin(v.y*80) * ti.sin(v.z*80) > 0.98:
+                if ti.sin(v.x*100) * ti.sin(v.y*80) * ti.sin(v.z*90) > 0.95:
                     color = ti.Vector([1, 1, 1])
                 break
 
@@ -97,11 +96,13 @@ def render(rs: ti.f32, mouse_x: ti.f32, mouse_y: ti.f32, reset_accum: ti.i32):
         pixels[i, j] = accum_buffer[i, j]
 
 # Interface
-gui = ti.GUI("Trou Noir Ultra-Lisse (SSAA)", res=(res_x, res_y), fast_gui=True)
+gui = ti.GUI("Trou Noir", res=(res_x, res_y), fast_gui=True)
 
 last_mouse = [0.0, 0.0]
 
+t = 0
 while gui.running:
+    t += 0.004  # Vitesse de rotation
     mouse = gui.get_cursor_pos()
     
     # Si la souris bouge, on reset un peu plus fort pour éviter le flou de mouvement
@@ -110,7 +111,7 @@ while gui.running:
         reset = 1
     last_mouse = mouse
     
-    render(0.5, mouse[0], mouse[1], reset)
+    render(0.5, mouse[0], mouse[1], reset, t)
     
     gui.set_image(pixels)
     gui.show()

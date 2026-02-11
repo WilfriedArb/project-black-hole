@@ -1,2 +1,13 @@
+<<<<<<< HEAD
 .venv/
+=======
+# Environnement virtuel (très important !)
+.venv/
+venv/
+env/
+
+# Cache Python
+__pycache__/
+*.pyc.venv/
+>>>>>>> dev
 __pycache__/
