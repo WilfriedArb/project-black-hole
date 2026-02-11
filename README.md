@@ -38,7 +38,7 @@ To solve this, the simulation uses an **effective refractive index** approach de
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/WilfriedArb/gravitational-lens.git
+git clone https://github.com/wilfriedarb/gravitational-lens.git
 cd gravitational-lens
 
 ```
