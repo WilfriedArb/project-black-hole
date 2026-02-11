@@ -1,6 +1,6 @@
 import taichi as ti
 
-print("test")
+print("test number 2")
 
 # Initialisation sur GPU
 ti.init(arch=ti.vulkan)
