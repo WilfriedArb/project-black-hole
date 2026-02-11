@@ -1,11 +1,11 @@
 import taichi as ti
+import streamlit as st
 
-print("test number 2")
 
-# Initialisation sur GPU
-ti.init(arch=ti.vulkan)
+# Initialisation sur CPU
+ti.init(arch=ti.cpu)
 
-res_x, res_y = 1920, 1080
+res_x, res_y = 1280, 720
 pixels = ti.Vector.field(3, dtype=ti.f32, shape=(res_x, res_y))
 # Champ supplémentaire pour stocker l'image précédente et lisser
 accum_buffer = ti.Vector.field(3, dtype=ti.f32, shape=(res_x, res_y))
@@ -96,20 +96,24 @@ def render(rs: ti.f32, mouse_x: ti.f32, mouse_y: ti.f32, reset_accum: ti.i32):
         pixels[i, j] = accum_buffer[i, j]
 
 # Interface
-gui = ti.GUI("Trou Noir Ultra-Lisse (SSAA)", res=(res_x, res_y), fast_gui=True)
+def main():
+    st.title("Simulation de Trou Noir Relativiste")
+    
+    # 2. Remplacer la souris par des sliders Streamlit
+    col1, col2 = st.columns(2)
+    with col1:
+        m_x = st.slider("Rotation Horizontale", 0.0, 1.0, 0.5)
+    with col2:
+        m_y = st.slider("Rotation Verticale", 0.0, 1.0, 0.5)
+    
+    # 3. Lancer le rendu
+    # Note : On fait quelques itérations pour que le SSAA (lissage) s'applique
+    for _ in range(5): 
+        render(0.5, m_x, m_y, 0)
+    
+    # 4. Convertir le résultat Taichi en image pour le navigateur
+    img_array = pixels.to_numpy().transpose(1, 0, 2)
+    st.image(img_array, caption="Rendu Taichi via CPU", use_column_width=True)
 
-last_mouse = [0.0, 0.0]
-
-while gui.running:
-    mouse = gui.get_cursor_pos()
-    
-    # Si la souris bouge, on reset un peu plus fort pour éviter le flou de mouvement
-    reset = 0
-    if abs(mouse[0] - last_mouse[0]) > 0.01 or abs(mouse[1] - last_mouse[1]) > 0.01:
-        reset = 1
-    last_mouse = mouse
-    
-    render(0.5, mouse[0], mouse[1], reset)
-    
-    gui.set_image(pixels)
-    gui.show()
+if __name__ == "__main__":
+    main()
