@@ -4,6 +4,10 @@
 
 This project simulates the light deflection caused by massive objects (like black holes) using **General Relativity** principles. It leverages **Taichi Lang** for high-performance physical computing and **Streamlit** for a live, interactive web interface.
 
+## 🚀 Live Demo
+
+https://project-black-hole-nvssmzbs5jh6eryw2ozeqj.streamlit.app/
+
 ## 🌟 Features
 
 This project is split into two specialized branches to balance performance and accessibility:
