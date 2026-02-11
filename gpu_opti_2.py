@@ -5,7 +5,7 @@ import streamlit as st
 # Initialisation sur CPU
 ti.init(arch=ti.cpu)
 
-res_x, res_y = 1280, 720
+res_x, res_y = 320, 180 #1280, 720
 pixels = ti.Vector.field(3, dtype=ti.f32, shape=(res_x, res_y))
 # Champ supplémentaire pour stocker l'image précédente et lisser
 accum_buffer = ti.Vector.field(3, dtype=ti.f32, shape=(res_x, res_y))
