@@ -1,6 +1,6 @@
 import taichi as ti
 
-print("test number 2")
+
 
 # Initialisation sur GPU
 ti.init(arch=ti.vulkan)
@@ -96,7 +96,7 @@ def render(rs: ti.f32, mouse_x: ti.f32, mouse_y: ti.f32, reset_accum: ti.i32):
         pixels[i, j] = accum_buffer[i, j]
 
 # Interface
-gui = ti.GUI("Trou Noir Ultra-Lisse (SSAA)", res=(res_x, res_y), fast_gui=True)
+gui = ti.GUI("Trou Noir", res=(res_x, res_y), fast_gui=True)
 
 last_mouse = [0.0, 0.0]
 
