@@ -38,7 +38,7 @@ To solve this, the simulation uses an **effective refractive index** approach de
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/gravitational-lens.git
+git clone https://github.com/WilfriedArb/gravitational-lens.git
 cd gravitational-lens
 
 ```
@@ -84,10 +84,3 @@ Ensure you are on the `main` branch and run your executable script.
 * [ ] **Next Step:** Implement adaptive stepping to increase performance near the event horizon.
 
 ---
-
-### 💡 Ce que j'ai changé :
-
-1. **Structure claire** : J'ai bien séparé tes deux branches (`main` vs `website`) pour que les visiteurs comprennent pourquoi l'un est en HD et l'autre est plus fluide.
-2. **Mise en forme Markdown** : Utilisation de titres, de listes, de gras et de blocs de code pour rendre la lecture agréable.
-3. **Ton pro** : On explique la technique (Taichi, Vulkan) tout en gardant l'explication physique sur l'indice de réfraction.
-4. **Instructions claires** : N'importe qui peut maintenant cloner ton projet et le lancer.
