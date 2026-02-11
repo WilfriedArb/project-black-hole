@@ -22,7 +22,7 @@ def n_and_grad(rel_pos, rs):
 @ti.kernel
 def render(rs: ti.f32, mouse_x: ti.f32, mouse_y: ti.f32, reset_accum: ti.i32):
     # Paramètres caméra
-    radius_cam = 12.0
+    radius_cam = 8.0
     theta = mouse_x * 6.28
     phi = (mouse_y - 0.5) * 3.14 * 0.95
     
