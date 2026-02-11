@@ -1,0 +1,3 @@
+taichi
+streamlit
+numpy
