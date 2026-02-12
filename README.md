@@ -30,9 +30,9 @@ This project is split into two specialized branches to balance performance and a
 
 ## 🔬 Physics Background
 
-It is physically impossible to create a standard optical lens that perfectly mimics a black hole because the refractive index would need to be infinite at the event horizon ().
+It is physically impossible to create a standard optical lens that perfectly mimics a black hole because the refractive index would need to be infinite at the event horizon.
 
-To solve this, the simulation uses an **effective refractive index** approach derived from the **Schwarzschild metric**. If a ray passes within the Schwarzschild radius (), it is "captured," and the corresponding pixel is rendered black, forming the shadow of the black hole.
+To solve this, the simulation uses an **effective refractive index** approach derived from the **Schwarzschild metric**. If a ray passes within the Schwarzschild radius, it is "captured," and the corresponding pixel is rendered black, forming the shadow of the black hole.
 
 ---
 
