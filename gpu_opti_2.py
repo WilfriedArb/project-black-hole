@@ -72,8 +72,8 @@ def render(rs: ti.f32, mouse_x: ti.f32, mouse_y: ti.f32, reset_accum: ti.i32, t:
                 if r.y * (r.y - v.y * ds) <= 0:
                     d = r.norm()
                     if rs * 2.2 < d < 4.2:
-                        intensity = ti.exp(-1.6 * (d - 2.8)**2)
-                        color = ti.Vector([0.420, 0.482, 1.000]) * intensity * 10
+                        intensity = ti.exp(-1.6 * (d - 2.8)**2) * 20
+                        color = ti.Vector([0.05, 0.30, 1.00]) * intensity #[0.420, 0.482, 1.000] [1.00, 0.30, 0.05]
                         if (d * 12) % 2.0 > 1.8: color *= 0.0
                         break
             else:
