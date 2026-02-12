@@ -71,9 +71,9 @@ def render(rs: ti.f32, mouse_x: ti.f32, mouse_y: ti.f32, reset_accum: ti.i32, t:
                 # Disque d'accrétion
                 if r.y * (r.y - v.y * ds) <= 0:
                     d = r.norm()
-                    if rs * 2.2 < d < 4.5:
-                        intensity = ti.exp(-0.6 * (d - 2.8)**2)
-                        color = ti.Vector([1.0, 0.3, 0.05]) * intensity
+                    if rs * 2.2 < d < 4.2:
+                        intensity = ti.exp(-1.6 * (d - 2.8)**2)
+                        color = ti.Vector([0.420, 0.482, 1.000]) * intensity * 10
                         if (d * 12) % 2.0 > 1.8: color *= 0.0
                         break
             else:
@@ -81,7 +81,7 @@ def render(rs: ti.f32, mouse_x: ti.f32, mouse_y: ti.f32, reset_accum: ti.i32, t:
             
             if r.norm() > 25.0:
                 # Étoiles procédurales
-                if ti.sin(v.x*100) * ti.sin(v.y*80) * ti.sin(v.z*90) > 0.95:
+                if ti.sin(v.x*100) * ti.sin(v.y*30) * ti.sin(v.z*90) > 0.9:
                     color = ti.Vector([1, 1, 1])
                 break
 
