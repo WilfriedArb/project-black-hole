@@ -81,7 +81,7 @@ def render(rs: ti.f32, mouse_x: ti.f32, mouse_y: ti.f32, reset_accum: ti.i32, t:
             
             if r.norm() > 25.0:
                 # Étoiles procédurales
-                if ti.sin(v.x*100) * ti.sin(v.y*30) * ti.sin(v.z*90) > 0.9:
+                if ti.sin(v.x*180) * ti.sin(v.y*80) * ti.sin(v.z*140) > 0.9:
                     color = ti.Vector([1, 1, 1])
                 break
 
