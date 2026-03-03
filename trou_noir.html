@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trou Noir — Simulation Relativiste</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    overflow: hidden;
+    font-family: 'Rajdhani', sans-serif;
+    cursor: none;
+  }
+
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  /* ── HUD ── */
+  #hud {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* Crosshair */
+  #crosshair {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px; height: 24px;
+  }
+  #crosshair::before, #crosshair::after {
+    content: '';
+    position: absolute;
+    background: rgba(255,255,255,0.35);
+  }
+  #crosshair::before { width: 1px; height: 100%; left: 50%; top: 0; }
+  #crosshair::after  { width: 100%; height: 1px; top: 50%; left: 0; }
+
+  /* Corner brackets */
+  .corner {
+    position: absolute;
+    width: 40px; height: 40px;
+    border-color: rgba(255,100,30,0.5);
+    border-style: solid;
+  }
+  .corner.tl { top: 20px; left: 20px; border-width: 1px 0 0 1px; }
+  .corner.tr { top: 20px; right: 20px; border-width: 1px 1px 0 0; }
+  .corner.bl { bottom: 20px; left: 20px; border-width: 0 0 1px 1px; }
+  .corner.br { bottom: 20px; right: 20px; border-width: 0 1px 1px 0; }
+
+  /* Info panel */
+  #info {
+    position: absolute;
+    bottom: 28px; left: 28px;
+    color: rgba(255,180,80,0.7);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    line-height: 1.9;
+    letter-spacing: 0.05em;
+  }
+  #info span { color: rgba(255,255,255,0.5); }
+
+  /* Title */
+  #title {
+    position: absolute;
+    top: 28px; left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    color: rgba(255,255,255,0.85);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 300;
+    font-size: 13px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  #title strong {
+    display: block;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    color: #fff;
+  }
+
+  /* rs slider */
+  #controls {
+    position: absolute;
+    bottom: 28px; right: 28px;
+    pointer-events: all;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+  }
+  .ctrl-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,180,80,0.7);
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 110px; height: 2px;
+    background: rgba(255,100,30,0.4);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(255,140,50,0.9);
+    box-shadow: 0 0 6px rgba(255,120,30,0.8);
+  }
+  #rs-val { color: #fff; min-width: 32px; text-align: right; }
+
+  /* Scan line overlay */
+  #scanlines {
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.07) 2px,
+      rgba(0,0,0,0.07) 4px
+    );
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  /* Vignette */
+  #vignette {
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at center,
+      transparent 55%,
+      rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  /* Custom cursor */
+  #cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255,140,50,0.9);
+    box-shadow: 0 0 12px rgba(255,120,30,1);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 20;
+    transition: transform 0.05s;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+<div id="scanlines"></div>
+<div id="vignette"></div>
+<div id="cursor"></div>
+
+<div id="hud">
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+
+  <div id="crosshair"></div>
+
+  <div id="title">
+    Simulation Relativiste<br>
+    <strong>TROU NOIR</strong>
+  </div>
+
+  <div id="info">
+    <div>RAYON SCHWARZSCHILD &nbsp;<span id="disp-rs">0.50</span> r<sub>s</sub></div>
+    <div>MÉTHODE &nbsp;<span>RAY MARCHING — LENTILLE GRAV.</span></div>
+    <div>DISQUE D'ACCRÉTION &nbsp;<span>ACTIVÉ</span></div>
+    <div>ANTI-ALIASING &nbsp;<span>TEMPOREL (TAA)</span></div>
+    <div id="fps-disp">FPS &nbsp;<span id="fps-val">—</span></div>
+  </div>
+
+  <div id="controls">
+    <div class="ctrl-row">
+      RAYON <span id="rs-val">0.50</span>
+      <input type="range" id="rs-slider" min="0.1" max="1.5" step="0.01" value="0.5">
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════  VERTEX SHADER  ═══════════════════ -->
+<script id="vs" type="x-shader/x-vertex">
+attribute vec2 a_pos;
+void main() {
+  gl_Position = vec4(a_pos, 0.0, 1.0);
+}
+</script>
+
+<!-- ═══════════════════  FRAGMENT SHADER  ═══════════════════ -->
+<script id="fs" type="x-shader/x-fragment">
+precision highp float;
+
+uniform vec2  u_res;
+uniform float u_rs;
+uniform float u_mouse_x;
+uniform float u_mouse_y;
+uniform float u_t;
+uniform float u_frame;
+uniform sampler2D u_accum;   // accumulation buffer (TAA)
+
+// ── Indice de réfraction de Schwarzschild et son gradient ──
+void n_and_grad(vec3 rel_pos, float rs, out float n, out vec3 grad_n) {
+  float r    = length(rel_pos);
+  float arg  = 1.0 - rs / r;
+  n          = 1.0 / sqrt(arg);
+  float dn   = -rs / (2.0 * r * r * pow(arg, 1.5));
+  grad_n     = dn * (rel_pos / r);
+}
+
+// ── Fond étoilé procédural (3 octaves) ──
+vec3 starfield(vec3 v) {
+  float p1 = sin(v.x*153.1+0.5) * sin(v.y*141.7+1.2) * sin(v.z*167.3+2.1);
+  float p2 = sin(v.x*127.4+3.1) * pow(sin(v.y*113.2+0.8),2.0) * sin(v.z*137.9+4.5);
+  float p3 = pow(sin(v.x*111.7+1.1),2.0) * sin(v.y*181.3+5.2) * sin(v.z*137.5+0.3);
+
+  if (p1 * p2 * p3 > 0.1) {
+    float intensity = p1 * p2 * p3 * 1.5;
+    if (p1 > 0.5)
+      return vec3(0.8, 0.9, 1.0) * intensity;
+    else
+      return vec3(1.0, 0.8, 0.6) * intensity;
+  }
+  return vec3(0.01, 0.01, 0.04);
+}
+
+void main() {
+  // ── Jitter TAA ──
+  // Pseudo-random basé sur fragcoord + frame
+  vec2 fc  = gl_FragCoord.xy;
+  float rnd = fract(sin(dot(fc + u_frame, vec2(127.1, 311.7))) * 43758.5453);
+  float rnd2= fract(sin(dot(fc + u_frame*1.3, vec2(269.5, 183.3))) * 43758.5453);
+
+  // ── UV avec jitter sous-pixel ──
+  float jx = rnd  - 0.5;
+  float jy = rnd2 - 0.5;
+  float aspect = u_res.x / u_res.y;
+  float uvx = (2.0*(fc.x + 0.5 + jx)/u_res.x - 1.0) * aspect;
+  float uvy =  2.0*(fc.y + 0.5 + jy)/u_res.y - 1.0;
+
+  // ── Caméra ──
+  float radius_cam = 8.0;
+  float theta = u_mouse_x * 6.28318 + u_t;
+  float phi   = (u_mouse_y - 0.5) * 3.14159 * 0.95;
+
+  vec3 cam_pos = vec3(
+    radius_cam * cos(phi) * sin(theta),
+    radius_cam * sin(phi),
+    radius_cam * cos(phi) * cos(theta)
+  );
+
+  vec3 forward = normalize(vec3(0.0) - cam_pos);
+  vec3 right   = normalize(cross(forward, vec3(0.0, 1.0, 0.0)));
+  vec3 up      = cross(right, forward);
+
+  vec3 dir = normalize(forward + uvx*right + uvy*up);
+
+  // ── Ray Marching ──
+  vec3  r = cam_pos;
+  vec3  v = dir;
+  vec3  color = vec3(0.01, 0.01, 0.04);
+  float ds = 0.04;
+
+  for (int step = 0; step < 600; step++) {
+    float dist = length(r);
+
+    if (dist < 5.0) {
+      float n_val;
+      vec3  grad;
+      n_and_grad(r, u_rs, n_val, grad);
+
+      if (n_val < 0.0 || dist < u_rs * 1.05) {
+        color = vec3(0.0);
+        break;
+      }
+
+      // Déviation gravitationnelle
+      vec3 dv = (grad - v * dot(v, grad)) / n_val;
+      r += v * ds;
+      v  = normalize(v + dv * ds);
+
+      // ── Disque d'accrétion ──
+      float r_prev_y = r.y - v.y * ds;
+      if (r.y * r_prev_y <= 0.0) {
+        float d = length(r);
+        if (d > u_rs * 2.2 && d < 4.2) {
+          float intensity = exp(-1.6 * pow(d - 2.8, 2.0)) * 20.0;
+          color = vec3(1.00, 0.30, 0.05) * intensity;
+          if (mod(d * 12.0, 2.0) > 1.8) color = vec3(0.0);
+          break;
+        }
+      }
+
+    } else {
+      r += v * ds * 2.0;
+    }
+
+    if (length(r) > 25.0) {
+      color = starfield(v);
+      break;
+    }
+  }
+
+  // ── TAA : mélange temporel 50/50 ──
+  vec2 uv_accum = fc / u_res;
+  vec3 prev = texture2D(u_accum, uv_accum).rgb;
+  vec3 blended = mix(prev, color, 0.5);
+
+  gl_FragColor = vec4(blended, 1.0);
+}
+</script>
+
+<!-- ═══════════════════  JS / WebGL  ═══════════════════ -->
+<script>
+(function(){
+  const canvas = document.getElementById('c');
+  const gl = canvas.getContext('webgl', {
+    antialias: false,
+    preserveDrawingBuffer: false
+  });
+  if (!gl) { alert("WebGL non supporté."); return; }
+
+  // ── Compile shader ──
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
+      console.error(gl.getShaderInfoLog(s));
+    return s;
+  }
+
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER,   document.getElementById('vs').text));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, document.getElementById('fs').text));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+
+  // ── Full-screen quad ──
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'a_pos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+  // ── Uniforms ──
+  const uRes    = gl.getUniformLocation(prog, 'u_res');
+  const uRs     = gl.getUniformLocation(prog, 'u_rs');
+  const uMouseX = gl.getUniformLocation(prog, 'u_mouse_x');
+  const uMouseY = gl.getUniformLocation(prog, 'u_mouse_y');
+  const uT      = gl.getUniformLocation(prog, 'u_t');
+  const uFrame  = gl.getUniformLocation(prog, 'u_frame');
+  const uAccum  = gl.getUniformLocation(prog, 'u_accum');
+
+  // ── Framebuffers ping-pong (TAA) ──
+  let W, H;
+  let fbA, fbB, texA, texB;
+
+  function makeFramebuffer(w, h) {
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return { fb, tex };
+  }
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    gl.viewport(0, 0, W, H);
+    // Recrée les framebuffers à la bonne taille
+    if (texA) gl.deleteTexture(texA);
+    if (texB) gl.deleteTexture(texB);
+    if (fbA)  gl.deleteFramebuffer(fbA);
+    if (fbB)  gl.deleteFramebuffer(fbB);
+    const a = makeFramebuffer(W, H);
+    const b = makeFramebuffer(W, H);
+    fbA = a.fb; texA = a.tex;
+    fbB = b.fb; texB = b.tex;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // ── État ──
+  let mouseX = 0.3, mouseY = 0.5;
+  let rs = 0.5;
+  let t  = 0.0;
+  let frame = 0;
+  let currentFb = fbA, currentTex = texA;
+  let prevFb    = fbB, prevTex    = texB;
+
+  // Souris
+  canvas.addEventListener('mousemove', e => {
+    mouseX = e.clientX / window.innerWidth;
+    mouseY = 1.0 - e.clientY / window.innerHeight;
+  });
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    mouseX = touch.clientX / window.innerWidth;
+    mouseY = 1.0 - touch.clientY / window.innerHeight;
+  }, { passive: false });
+
+  // Curseur custom
+  const cursor = document.getElementById('cursor');
+  window.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top  = e.clientY + 'px';
+  });
+
+  // Slider rs
+  const slider   = document.getElementById('rs-slider');
+  const rsVal    = document.getElementById('rs-val');
+  const dispRs   = document.getElementById('disp-rs');
+  slider.addEventListener('input', () => {
+    rs = parseFloat(slider.value);
+    rsVal.textContent  = rs.toFixed(2);
+    dispRs.textContent = rs.toFixed(2);
+  });
+
+  // FPS
+  let lastTime = performance.now();
+  let fpsFrames = 0;
+  const fpsEl = document.getElementById('fps-val');
+
+  // ── Boucle de rendu ──
+  function render(now) {
+    requestAnimationFrame(render);
+    t += 0.003;
+    frame++;
+
+    // FPS counter
+    fpsFrames++;
+    if (now - lastTime > 500) {
+      fpsEl.textContent = Math.round(fpsFrames / ((now - lastTime) / 1000));
+      fpsFrames = 0;
+      lastTime = now;
+    }
+
+    // Rendu dans le framebuffer courant
+    gl.bindFramebuffer(gl.FRAMEBUFFER, currentFb);
+    gl.viewport(0, 0, W, H);
+
+    gl.uniform2f(uRes, W, H);
+    gl.uniform1f(uRs, rs);
+    gl.uniform1f(uMouseX, mouseX);
+    gl.uniform1f(uMouseY, mouseY);
+    gl.uniform1f(uT, t);
+    gl.uniform1f(uFrame, frame);
+
+    // Bind texture précédente pour TAA
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, prevTex);
+    gl.uniform1i(uAccum, 0);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+    // Affichage sur l'écran
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, W, H);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, currentTex);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+    // Ping-pong
+    [currentFb, prevFb]   = [prevFb, currentFb];
+    [currentTex, prevTex] = [prevTex, currentTex];
+  }
+
+  requestAnimationFrame(render);
+})();
+</script>
+</body>
+</html>
