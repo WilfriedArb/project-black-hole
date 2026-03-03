@@ -1,7 +1,6 @@
 import taichi as ti
 
 
-
 # Initialisation sur GPU
 ti.init(arch=ti.vulkan)
 
@@ -17,6 +16,13 @@ def n_and_grad(rel_pos, rs):
     dn_dr = -rs / (2.0 * (r**2) * (1.0 - rs / r)**1.5)
     grad_n = dn_dr * (rel_pos / r)
     return n, grad_n
+
+@ti.func
+def hash13(p):
+    # Fonction mathématique qui mélange les coordonnées des étoiles de manière chaotique
+    p3 = ti.math.fract(p * ti.Vector([.1031, .1030, .0973]))
+    p3 += p3.dot(p3.yzx + 33.33)
+    return ti.math.fract((p3.x + p3.y) * p3.z)
 
 
 @ti.kernel  # Code compilé par taichi et envoyé sur GPU (appelé par code python)
@@ -43,12 +49,13 @@ def render(rs: ti.f32, mouse_x: ti.f32, mouse_y: ti.f32, reset_accum: ti.i32, t:
         # Cela permet de calculer des points légèrement différents à chaque frame
         jitter_x = ti.random() - 0.5
         jitter_y = ti.random() - 0.5
-        
+
         uv_x = (2.0 * (i + 0.5 + jitter_x) / res_x - 1.0) * (res_x / res_y)
         uv_y = (2.0 * (j + 0.5 + jitter_y) / res_y - 1.0)
-        
-        dir = (forward + uv_x * right + uv_y * up).normalized()
-        
+
+        # On calcul la direction des rayons qui partent des pixels
+        dir = (forward + uv_x * right + uv_y * up).normalized()  
+
         r = cam_pos
         v = dir
         color = ti.Vector([0.01, 0.01, 0.04]) # Fond Espace
@@ -62,27 +69,42 @@ def render(rs: ti.f32, mouse_x: ti.f32, mouse_y: ti.f32, reset_accum: ti.i32, t:
                 if n < 0 or dist < rs * 1.05:
                     color = ti.Vector([0, 0, 0])
                     break
-                
+
                 # Physique : déviation de la lumière
                 dv = (grad - v * v.dot(grad)) / n
                 r += v * ds
                 v = (v + dv * ds).normalized()
-                
+
                 # Disque d'accrétion
                 if r.y * (r.y - v.y * ds) <= 0:
                     d = r.norm()
                     if rs * 2.2 < d < 4.2:
                         intensity = ti.exp(-1.6 * (d - 2.8)**2) * 20
-                        color = ti.Vector([0.05, 0.30, 1.00]) * intensity #[0.420, 0.482, 1.000] [1.00, 0.30, 0.05]
+                        color = ti.Vector([1.00, 0.30, 0.05]) * intensity #[0.420, 0.482, 1.000] [0.05, 0.30, 1.00]
                         if (d * 12) % 2.0 > 1.8: color *= 0.0
                         break
             else:
                 r += v * ds * 2.0
-            
+
             if r.norm() > 25.0:
-                # Étoiles procédurales
-                if ti.sin(v.x*180) * ti.sin(v.y*80) * ti.sin(v.z*140) > 0.9:
-                    color = ti.Vector([1, 1, 1])
+                # Octave 1 : Grandes structures (Bras)
+                p1 = ti.sin(v.x * 153.1 + 0.5) * ti.sin(v.y * 141.7 + 1.2) * ti.sin(v.z * 167.3 + 2.1)
+                
+                # Octave 2 : Amas moyens
+                p2 = ti.sin(v.x * 127.4 + 3.1) * ti.sin(v.y * 113.2 + 0.8)**2 * ti.sin(v.z * 137.9 + 4.5)
+                
+                # Octave 3 : Points fins (Etoiles)
+                p3 = ti.sin(v.x * 111.7 + 1.1)**2 * ti.sin(v.y * 181.3 + 5.2) * ti.sin(v.z * 137.5 + 0.3)
+                
+                # Le produit final : l'étoile est là où les 3 ondes sont au maximum
+                # On ajuste le seuil : plus il est bas, plus il y a d'étoiles
+                if p1 * p2 * p3 > 0.1:
+                    intensity = (p1 * p2 * p3) * 1.5
+                    # Si p1 est élevé, l'étoile est bleutée, sinon elle est orangée
+                    if p1 > 0.5:
+                        color = ti.Vector([0.8, 0.9, 1.0]) * intensity # Bleue
+                    else:
+                        color = ti.Vector([1.0, 0.8, 0.6]) * intensity # Orangée
                 break
 
         # --- MÉLANGE TEMPOREL (SSAA) ---
@@ -92,7 +114,7 @@ def render(rs: ti.f32, mouse_x: ti.f32, mouse_y: ti.f32, reset_accum: ti.i32, t:
             # On garde 50% de l'ancienne image et 50% de la nouvelle
             # C'est ce qui crée le lissage parfait (Anti-aliasing)
             accum_buffer[i, j] = accum_buffer[i, j] * 0.5 + color * 0.5
-        
+
         pixels[i, j] = accum_buffer[i, j]
 
 # Interface
@@ -102,16 +124,16 @@ last_mouse = [0.0, 0.0]
 
 t = 0
 while gui.running:
-    t += 0.004  # Vitesse de rotation
+    t += 0.003  # Vitesse de rotation
     mouse = gui.get_cursor_pos()
-    
+
     # Si la souris bouge, on reset un peu plus fort pour éviter le flou de mouvement
     reset = 0
     if abs(mouse[0] - last_mouse[0]) > 0.01 or abs(mouse[1] - last_mouse[1]) > 0.01:
         reset = 1
     last_mouse = mouse
-    
+
     render(0.5, mouse[0], mouse[1], reset, t)
-    
+
     gui.set_image(pixels)
     gui.show()
