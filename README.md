@@ -2,15 +2,16 @@
 
 # 🕳️ Gravitational Lens Simulation
 
-This project simulates the light deflection caused by massive objects (like black holes) using **General Relativity** principles. It leverages **Taichi Lang** for high-performance physical computing and **Streamlit** for a live, interactive web interface.
+This project simulates the light deflection caused by massive objects (like black holes) using **Fermat** principles and **Eikonal** equation. It leverages **Taichi Lang** for high-performance physical computing and **Streamlit** for a live, interactive web interface.
 
 ## 🚀 Live Demo
 
-https://project-black-hole-nvssmzbs5jh6eryw2ozeqj.streamlit.app/
+CPU computing : https://project-black-hole-nvssmzbs5jh6eryw2ozeqj.streamlit.app/
+GPU computing : https://wilfriedarb.github.io/project-black-hole/
 
 ## 🌟 Features
 
-This project is split into two specialized branches to balance performance and accessibility:
+This project is split into three specialized branches to balance performance and accessibility:
 
 ### 1. `main` Branch: High-Fidelity (Local GPU)
 
@@ -25,6 +26,13 @@ This project is split into two specialized branches to balance performance and a
 * **Resolution:** Optimized low-res (e.g., 480p) for fluidity on web servers.
 * **Interface:** Interactive sliders to adjust mass, distance, and resolution in real-time.
 * **Hosting:** Deployed live on Streamlit Cloud.
+
+### 3. `webgpu` Branch: Local GPU on web page
+
+* **Backend:** Taichi with **GPU**.
+* **Resolution:** Optimized low-res (e.g., 480p) for fluidity on web servers.
+* **Interface:** Interactive sliders to adjust Schwarzschild radius in real-time.
+* **Developpment:** AI convertion of the main python program into html.
 
 ---
 
@@ -85,6 +93,6 @@ Ensure you are on the `main` branch and run your executable script.
 * [x] 3D Ray-Tracing (Ray Marching) implementation.
 * [x] GPU acceleration via Vulkan.
 * [x] Streamlit Cloud deployment (CPU version).
-* [ ] **Next Step:** Implement adaptive stepping to increase performance near the event horizon.
+* [ ] **Next Step:** Compute de real geodesic equations of photons nearby a Schwarzschild Black Hole.
 
 ---
